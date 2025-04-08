@@ -726,10 +726,10 @@ class SigmaRegularExpression(SigmaType):
             flags = 0
             for flag in self.flags:
                 flags |= self.sigma_to_python_flags[flag]
-            re.compile(self.escape(), flags)
+            re.compile(str(self.regexp), flags)
         except re.error as e:
             raise SigmaRegularExpressionError(
-                f"Regular expression '{self.escape()}' is invalid: {str(e)}"
+                f"Regular expression '{str(self.regexp)}' is invalid: {str(e)}"
             ) from e
 
     def escape(
