@@ -591,7 +591,8 @@ class SigmaString(SigmaType):
                 wildcard_multi=".*",
                 wildcard_single=".",
                 add_escaped=".*+?^$[](){}\\|" + custom_escaped,
-            )
+            ),
+            to_escape=False,
         )
 
     def upper(self) -> "SigmaString":
@@ -696,6 +697,7 @@ class SigmaRegularExpression(SigmaType):
     regexp: SigmaString = field(init=False)
     regexp_init: InitVar[Union[SigmaString, str]]
     flags: Set[SigmaRegularExpressionFlag] = field(default_factory=set)
+    to_escape: bool = field(default=True)
     sigma_to_python_flags: ClassVar[Dict[SigmaRegularExpressionFlag, re.RegexFlag]] = {
         SigmaRegularExpressionFlag.IGNORECASE: re.IGNORECASE,
         SigmaRegularExpressionFlag.MULTILINE: re.MULTILINE,
@@ -722,14 +724,15 @@ class SigmaRegularExpression(SigmaType):
 
     def compile(self):
         """Verify if regular expression is valid by compiling it"""
+        to_compile = self.escape() if self.to_escape else str(self.regexp)
         try:
             flags = 0
             for flag in self.flags:
                 flags |= self.sigma_to_python_flags[flag]
-            re.compile(self.escape(), flags)
+            re.compile(to_compile, flags)
         except re.error as e:
             raise SigmaRegularExpressionError(
-                f"Regular expression '{self.escape()}' is invalid: {str(e)}"
+                f"Regular expression '{to_compile}' is invalid: {str(e)}"
             ) from e
 
     def escape(
